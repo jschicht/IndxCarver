@@ -3,18 +3,17 @@ IndxCarver
 This is a simple tool to dump individual INDX records. It scans the input for the signature on each sector/512 bytes. Input must be a file.
 
 Syntax is:
-IndxCarver.exe InputFile
+IndxCarver.exe /InputFile: /OutputPath:
 
-Example 1
-IndxCarver.exe c:\memdump.bin
+Examples
+IndxCarver.exe /InputFile:c:\memdump.bin
+IndxCarver.exe /InputFile:c:\unallocated.chunk /OutputPath:e:\temp
 
-Example 2
-IndxCarver.exe c:\unallocated.chunk
-
-If no input file is given as parameter, a fileopen dialog is launched. Output is automatically resolved based on the input name. Output is split in 3. For example 1 the output may be:
-memdump.bin.2015-02-14_21-46-54.wfixups.INDX
-memdump.bin.2015-02-14_21-46-54.wofixups.INDX
-memdump.bin.2015-02-14_21-46-54.false.positives.INDX
+If no input file is given as parameter, a fileopen dialog is launched. Output will default to program directory if omitted. Output is split in 3, in addition to a log file. Example output may look like:
+Carver_Indx_2015-02-14_21-46-54.log
+Carver_Indx_2015-02-14_21-46-54.wfixups.INDX
+Carver_Indx_2015-02-14_21-46-54.wofixups.INDX
+Carver_Indx_2015-02-14_21-46-54.false.positives.INDX
 
 This tool is handy when you have no means of accessing a healthy INDX. For instance a memory dump or damaged volume. The tool will by default first attempt to apply fixups, and if it fails it will retry by skipping fixups. Applying fixups here means verifying the update sequence array and applying it.
 
@@ -27,13 +26,18 @@ The test of the record structure is rather comprehensive, and the output quality
 
 Changelog:
 
-1.0.0.0:
-First version
+1.0.0.3:
+Added OutputPath as parameter. 
+Commandline syntax changes. 
+Changed the output file names to be prefixed with Carver_Indx_
+
+1.0.0.2:
+Loosened up validation to only validate first 512 bytes, for the check without fixup.
 
 1.0.0.1:
 Added validation checks on data inside INDX.
 Set default INDX size to 4096 bytes.
 Split out in 3.
 
-1.0.0.2:
-Loosened up validation to only validate first 512 bytes, for the check without fixup.
+1.0.0.0:
+First version.

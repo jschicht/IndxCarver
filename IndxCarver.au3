@@ -4,7 +4,7 @@
 #AutoIt3Wrapper_Change2CUI=y
 #AutoIt3Wrapper_Res_Comment=Extracts raw INDX records
 #AutoIt3Wrapper_Res_Description=Extracts raw INDX records
-#AutoIt3Wrapper_Res_Fileversion=1.0.0.2
+#AutoIt3Wrapper_Res_Fileversion=1.0.0.3
 #AutoIt3Wrapper_Res_requestedExecutionLevel=asInvoker
 #EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
 #Include <WinAPIEx.au3>
@@ -12,38 +12,31 @@
 Global Const $FILEsig = "46494c45"
 Global Const $INDXsig = "494E4458"
 Global Const $INDX_Size = 4096
+Global $File,$OutputPath
 
-ConsoleWrite("IndxCarver v1.0.0.2" & @CRLF)
+ConsoleWrite("IndxCarver v1.0.0.3" & @CRLF)
+
+_GetInputParams()
 
 $TimestampStart = @YEAR & "-" & @MON & "-" & @MDAY & "_" & @HOUR & "-" & @MIN & "-" & @SEC
-$logfile = FileOpen(@ScriptDir & "\" & $TimestampStart & ".log",2+32)
+$logfilename = $OutputPath & "\Carver_Indx_" & $TimestampStart & ".log"
+$logfile = FileOpen($logfilename,2+32)
 If @error Then
-	ConsoleWrite("Error creating: " & @ScriptDir & "\" & $TimestampStart & ".log" & @CRLF)
+	ConsoleWrite("Error creating: " & $logfilename & @CRLF)
 	Exit
 EndIf
 
-If $cmdline[0] <> 1 Then ;No parameters passed
-	$File = FileOpenDialog("Select file",@ScriptDir,"All (*.*)")
-	If @error Then Exit
-ElseIf FileExists($cmdline[1]) = 0 Then
-	ConsoleWrite("Input file does not exist: " & $cmdline[1] & @CRLF)
-	$File = FileOpenDialog("Select file",@ScriptDir,"All (*.*)")
-	If @error Then Exit
-Else
-	$File = $cmdline[1]
-EndIf
-
-$OutFileWithFixups = $File&"."&$TimestampStart&".wfixups.INDX"
+$OutFileWithFixups = $OutputPath & "\Carver_Indx_" & $TimestampStart & ".wfixups.INDX"
 If FileExists($OutFileWithFixups) Then
 	_DebugOut("Error outfile exist: " & $OutFileWithFixups)
 	Exit
 EndIf
-$OutFileWithoutFixups = $File&"."&$TimestampStart&".wofixups.INDX"
+$OutFileWithoutFixups = $OutputPath & "\Carver_Indx_" & $TimestampStart & ".wofixups.INDX"
 If FileExists($OutFileWithoutFixups) Then
 	_DebugOut("Error outfile exist: " & $OutFileWithoutFixups)
 	Exit
 EndIf
-$OutFileFalsePositives = $File&"."&$TimestampStart&".false.positive.INDX"
+$OutFileFalsePositives = $OutputPath & "\Carver_Indx_" & $TimestampStart & ".false.positive.INDX"
 If FileExists($OutFileFalsePositives) Then
 	_DebugOut("Error outfile exist: " & $OutFileFalsePositives)
 	Exit
@@ -298,4 +291,32 @@ Func _ValidateIndxStructureWithoutFixups($Entry)
 	If $IsNotLeafNode > 1 Then Return 0
 
 	Return 1
+EndFunc
+
+Func _GetInputParams()
+
+	For $i = 1 To $cmdline[0]
+		;ConsoleWrite("Param " & $i & ": " & $cmdline[$i] & @CRLF)
+		If StringLeft($cmdline[$i],11) = "/InputFile:" Then $File = StringMid($cmdline[$i],12)
+		If StringLeft($cmdline[$i],12) = "/OutputPath:" Then $OutputPath = StringMid($cmdline[$i],13)
+	Next
+
+	If $File="" Then ;No InputFile parameter passed
+		$File = FileOpenDialog("Select file",@ScriptDir,"All (*.*)")
+		If @error Then Exit
+	ElseIf FileExists($File) = 0 Then
+		ConsoleWrite("Input file does not exist: " & $cmdline[1] & @CRLF)
+		$File = FileOpenDialog("Select file",@ScriptDir,"All (*.*)")
+		If @error Then Exit
+	EndIf
+
+	If StringLen($OutputPath) > 0 Then
+		If Not FileExists($OutputPath) Then
+			ConsoleWrite("Error input $OutputPath does not exist. Setting default to program directory." & @CRLF)
+			$OutputPath = @ScriptDir
+		EndIf
+	Else
+		$OutputPath = @ScriptDir
+	EndIf
+
 EndFunc
