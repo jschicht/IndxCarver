@@ -1,13 +1,15 @@
 IndxCarver
 
-This is a simple tool to dump individual INDX records. It scans the input for the signature on each sector/512 bytes. Input must be a file.
+This is a simple tool to dump individual INDX records. It scans the input for the signature on either each byte or on each sector/512 bytes. Input must be a file.
 
 Syntax is:
-IndxCarver.exe /InputFile: /OutputPath:
+IndxCarver.exe /InputFile: /OutputPath: /ScanAllBytes:
 
 Examples
 IndxCarver.exe /InputFile:c:\memdump.bin
-IndxCarver.exe /InputFile:c:\unallocated.chunk /OutputPath:e:\temp
+IndxCarver.exe /InputFile:c:\memdump.bin /ScanAllBytes:1
+IndxCarver.exe /InputFile:c:\unallocated.chunk /OutputPath:e:\temp /ScanAllBytes:0
+IndxCarver.exe /InputFile:c:\unallocated.chunk /OutputPath:e:\temp /ScanAllBytes:1
 
 If no input file is given as parameter, a fileopen dialog is launched. Output will default to program directory if omitted. Output is split in 3, in addition to a log file. Example output may look like:
 Carver_Indx_2015-02-14_21-46-54.log
@@ -25,6 +27,9 @@ The test of the record structure is rather comprehensive, and the output quality
 
 
 Changelog:
+
+1.0.0.4: 
+Added /ScanAllBytes as new parameter. Default is 0. If set, then scanning will be performed on every byte, instead of per sector (only works on images and files).
 
 1.0.0.3:
 Added OutputPath as parameter. 

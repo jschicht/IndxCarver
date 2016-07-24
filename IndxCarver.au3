@@ -4,7 +4,7 @@
 #AutoIt3Wrapper_Change2CUI=y
 #AutoIt3Wrapper_Res_Comment=Extracts raw INDX records
 #AutoIt3Wrapper_Res_Description=Extracts raw INDX records
-#AutoIt3Wrapper_Res_Fileversion=1.0.0.3
+#AutoIt3Wrapper_Res_Fileversion=1.0.0.4
 #AutoIt3Wrapper_Res_requestedExecutionLevel=asInvoker
 #EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
 #Include <WinAPIEx.au3>
@@ -12,9 +12,9 @@
 Global Const $FILEsig = "46494c45"
 Global Const $INDXsig = "494E4458"
 Global Const $INDX_Size = 4096
-Global $File,$OutputPath
+Global $File,$OutputPath,$ScanAllBytes=0,$SmallBuffSize=8
 
-ConsoleWrite("IndxCarver v1.0.0.3" & @CRLF)
+ConsoleWrite("IndxCarver v1.0.0.4" & @CRLF)
 
 _GetInputParams()
 
@@ -54,6 +54,7 @@ _DebugOut("OutFileWithFixups: " & $OutFileWithFixups)
 _DebugOut("OutFileWithoutFixups: " & $OutFileWithoutFixups)
 _DebugOut("OutFileFalsePositives: " & $OutFileFalsePositives)
 _DebugOut("INDX size configuration: " & $INDX_Size)
+_DebugOut("ScanAllBytes: " & $ScanAllBytes)
 
 $hFile = _WinAPI_CreateFile("\\.\" & $File,2,2,7)
 If $hFile = 0 Then
@@ -77,7 +78,12 @@ If $hFileOutFalsePositives = 0 Then
 EndIf
 
 $rBuffer = DllStructCreate("byte ["&$INDX_Size&"]")
-$JumpSize = 512
+$rBufferSmall = DllStructCreate("byte ["&$SmallBuffSize&"]")
+If $ScanAllBytes Then
+	$JumpSize = 1
+Else
+	$JumpSize = 512
+EndIf
 $SectorSize = $INDX_Size
 $JumpForward = $INDX_Size/$JumpSize
 $NextOffset = 0
@@ -88,14 +94,30 @@ $nBytes = ""
 $Timerstart = TimerInit()
 Do
 	If IsInt(Mod(($NextOffset * $JumpSize),$FileSize)/1000000) Then ConsoleWrite(Round((($NextOffset * $JumpSize)/$FileSize)*100,2) & " %" & @CRLF)
-	_WinAPI_SetFilePointerEx($hFile, $NextOffset*$JumpSize, $FILE_BEGIN)
-	_WinAPI_ReadFile($hFile, DllStructGetPtr($rBuffer), $SectorSize, $nBytes)
-	$DataChunk = DllStructGetData($rBuffer, 1)
+	If Not _WinAPI_SetFilePointerEx($hFile, $NextOffset*$JumpSize, $FILE_BEGIN) Then
+		_DebugOut("SetFilePointerEx error on offset " & $NextOffset*$JumpSize & @CRLF)
+		Exit
+	EndIf
+	If Not _WinAPI_ReadFile($hFile, DllStructGetPtr($rBufferSmall), $SmallBuffSize, $nBytes) Then
+		_DebugOut("ReadFile error on offset " & $NextOffset*$JumpSize & @CRLF)
+		Exit
+	EndIf
+	$DataChunkSmall = DllStructGetData($rBufferSmall, 1)
 ;	ConsoleWrite("Record: " & $NextOffset & @CRLF)
-	If StringMid($DataChunk,3,8) <> $INDXsig Then
+	If StringMid($DataChunkSmall,3,8) <> $INDXsig Then
 		$NextOffset+=1
 		ContinueLoop
 	EndIf
+
+	If Not _WinAPI_SetFilePointerEx($hFile, $NextOffset*$JumpSize, $FILE_BEGIN) Then
+		_DebugOut("SetFilePointerEx error on offset " & $NextOffset*$JumpSize & @CRLF)
+		Exit
+	EndIf
+	If Not _WinAPI_ReadFile($hFile, DllStructGetPtr($rBuffer), $SectorSize, $nBytes) Then
+		_DebugOut("ReadFile error on offset " & $NextOffset*$JumpSize & @CRLF)
+		Exit
+	EndIf
+	$DataChunk = DllStructGetData($rBuffer, 1)
 
 	If Not _ValidateIndxStructureWithFixups($DataChunk) Then ; Test failed. Trying to validate INDX structure without caring for fixups
 		If Not _ValidateIndxStructureWithoutFixups($DataChunk) Then ; INDX structure seems bad. False positive
@@ -299,6 +321,7 @@ Func _GetInputParams()
 		;ConsoleWrite("Param " & $i & ": " & $cmdline[$i] & @CRLF)
 		If StringLeft($cmdline[$i],11) = "/InputFile:" Then $File = StringMid($cmdline[$i],12)
 		If StringLeft($cmdline[$i],12) = "/OutputPath:" Then $OutputPath = StringMid($cmdline[$i],13)
+		If StringLeft($cmdline[$i],14) = "/ScanAllBytes:" Then $ScanAllBytes = StringMid($cmdline[$i],15)
 	Next
 
 	If $File="" Then ;No InputFile parameter passed
@@ -317,6 +340,15 @@ Func _GetInputParams()
 		EndIf
 	Else
 		$OutputPath = @ScriptDir
+	EndIf
+
+	If StringLen($ScanAllBytes) > 0 Then
+		If $ScanAllBytes<>0 And $ScanAllBytes<>1 Then
+			ConsoleWrite("Error: /ScanAllBytes: param was not configured properly. Expected 0 or 1. Reverting to default 0." & @CRLF)
+			$ScanAllBytes=0
+		EndIf
+	Else
+		$ScanAllBytes=0
 	EndIf
 
 EndFunc
