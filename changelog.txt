@@ -1,0 +1,26 @@
+IndxCarver Changelog
+
+1.0.0.5
+Great performance improvement.
+Fixed bug, that caused a page to be missed on scanning for every false positive.
+Fixed bug that caused error code not to be written in the log.
+Removed /ScanAllBytes parameter as it is default, and makes no sense not to.
+
+1.0.0.4: 
+Added /ScanAllBytes as new parameter. Default is 0. If set, then scanning will be performed on every byte, instead of per sector (only works on images and files).
+
+1.0.0.3:
+Added OutputPath as parameter. 
+Commandline syntax changes. 
+Changed the output file names to be prefixed with Carver_Indx_
+
+1.0.0.2:
+Loosened up validation to only validate first 512 bytes, for the check without fixup.
+
+1.0.0.1:
+Added validation checks on data inside INDX.
+Set default INDX size to 4096 bytes.
+Split out in 3.
+
+1.0.0.0:
+First version.

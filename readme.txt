@@ -1,15 +1,15 @@
 IndxCarver
 
-This is a simple tool to dump individual INDX records. It scans the input for the signature on either each byte or on each sector/512 bytes. Input must be a file.
+This is a simple tool to dump individual INDX records.  It scans the input for signatures in addition to record validations. Input must be a file.
 
 Syntax is:
-IndxCarver.exe /InputFile: /OutputPath: /ScanAllBytes:
+IndxCarver.exe /InputFile: /OutputPath:
 
 Examples
 IndxCarver.exe /InputFile:c:\memdump.bin
-IndxCarver.exe /InputFile:c:\memdump.bin /ScanAllBytes:1
-IndxCarver.exe /InputFile:c:\unallocated.chunk /OutputPath:e:\temp /ScanAllBytes:0
-IndxCarver.exe /InputFile:c:\unallocated.chunk /OutputPath:e:\temp /ScanAllBytes:1
+IndxCarver.exe /InputFile:c:\memdump.bin
+IndxCarver.exe /InputFile:c:\unallocated.chunk /OutputPath:e:\temp
+IndxCarver.exe /InputFile:c:\unallocated.chunk /OutputPath:e:\temp
 
 If no input file is given as parameter, a fileopen dialog is launched. Output will default to program directory if omitted. Output is split in 3, in addition to a log file. Example output may look like:
 Carver_Indx_2015-02-14_21-46-54.log
@@ -24,25 +24,3 @@ Memory dumps and unallocated chunks may contain numerous INDX records and that c
 It is advised to check the log file generated. There will be verbose information written. Especially the false positives and their offsets can be found here, in addition to the separate output file containg all false positives.
 
 The test of the record structure is rather comprehensive, and the output quality is excellently divided in 3.
-
-
-Changelog:
-
-1.0.0.4: 
-Added /ScanAllBytes as new parameter. Default is 0. If set, then scanning will be performed on every byte, instead of per sector (only works on images and files).
-
-1.0.0.3:
-Added OutputPath as parameter. 
-Commandline syntax changes. 
-Changed the output file names to be prefixed with Carver_Indx_
-
-1.0.0.2:
-Loosened up validation to only validate first 512 bytes, for the check without fixup.
-
-1.0.0.1:
-Added validation checks on data inside INDX.
-Set default INDX size to 4096 bytes.
-Split out in 3.
-
-1.0.0.0:
-First version.
